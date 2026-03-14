@@ -1,0 +1,4 @@
+datasets/
+.env/
+processed_datasets/
+output*
