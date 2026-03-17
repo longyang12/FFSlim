@@ -6,7 +6,7 @@ class DLinkedNode:
         self.prev = None
         self.next = None
 
-class LRUCache:
+class DGIMLRUCache:
     def __init__(self, capacity: int):
         self.index = {}  # 哈希表细粒度索引 key:int,value:(img,caption,obj_index)
         self.cache = {}  # 哈希表粗粒度存储 key:int,value:{image:bytes,captions:[]}

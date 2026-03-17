@@ -3,13 +3,21 @@ from PIL import Image
 import random
 import pandas as pd
 import mmap
-from tdp_lru import LRUCache
-from tdp_lfu import LFUCache
-from tdp_iacma_with_heap import IACMACacheWithHeap
-from tdp_iacma import IACMACache
-from tdp_iacma_with_memory import IACMACacheWithMemory
-from tdp_coordl import CoorDL
-from tdp_quiver import Quiver
+import sys
+import argparse
+
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+
+from cache.tdp_lru import LRUCache
+from cache.tdp_quiver import Quiver
+from cache.tdp_coordl import CoorDL
+from cache.tdp_iacma import IACMACache
+from cache.tdp_iacma_with_memory import IACMACacheWithMemory
+from cache.tdp_iacma_with_heap import IACMACacheWithHeap
+
+
 
 BLOCK_SIZE = 4096
 
@@ -84,28 +92,17 @@ def process_samples(sample_ids, base_dir, num, cache_algorithm):
     if num != 0:
         if cache_algorithm == "lru":
             cache = LRUCache(num)
-        elif cache_algorithm == "lfu":
-            cache = LFUCache(num)
-        elif cache_algorithm == "iacma_with_heap":
-            cache = IACMACacheWithHeap(num, images)
+        elif cache_algorithm == "quiver":
+            cache = Quiver(num)
+        elif cache_algorithm == "coordl":
+            cache = CoorDL(num)   
         elif cache_algorithm == "iacma":
             cache = IACMACache(num, images)
         elif cache_algorithm == "iacma_with_memory":
             cache = IACMACacheWithMemory(num, images)
-            # 预热
-            # warm_up_start = time.time()
-            # warm_up(cache,len(sample_ids),images,base_dir)
-            # with open("/home/llm/experiment/dataset_Analysis_Modeling/output.log","a+") as f:
-            #     f.write(f"iacma_with_memory warm_up耗时 at {args.num},{args.cache_algorithm},memory_size:{args.memory}:{time.time() - warm_up_start:.4f}秒\n")                
-        elif cache_algorithm == "quiver":
-            cache = Quiver(num)
-        elif cache_algorithm == "coordl":
-            cache = CoorDL(num)
-            # 预热
-            # warm_up_start = time.time()
-            # warm_up(cache,len(sample_ids),images,base_dir)
-            # with open("/home/llm/experiment/dataset_Analysis_Modeling/output.log","a+") as f:
-            #     f.write(f"TDP warm_up耗时 at {args.num},{args.cache_algorithm},memory_size:{args.memory}:{time.time() - warm_up_start:.4f}秒\n")    
+        elif cache_algorithm == "iacma_with_heap":
+            cache = IACMACacheWithHeap(num, images)
+
     hits = 0
     count = 0
     
@@ -140,7 +137,6 @@ def process_samples(sample_ids, base_dir, num, cache_algorithm):
             f.write(f"cache hits:{hits},requests:{count},cache hit rate:{hits/count}\n")
 
 
-import argparse
 # 创建解析器
 parser = argparse.ArgumentParser()
 # 添加参数
@@ -182,7 +178,8 @@ if args.dataset == "Clotho":
 if args.dataset == "Clotho_E":
     filename = "/mnt/datasets/Clotho_E_TDP"
 
-samples = {"flickr30k":155060,"flickr30k_entities":158905,"mscoco":589785,"vqa2":443757,"gqa":943000,"cc3m":256877,"MSRVTT":200000-10,"Clotho":19690-5,"Clotho_E":98450-5}
+s
+samples = {"cc3m":256878,"flickr30k":155065,"flickr30k_entities":158910,"mscoco":589790,"vqa2":443757,"gqa":943000,"MSRVTT":200000,"Clotho":19690,"Clotho_E":98450}
 
 # 调用处理函数
 sample_list = [i for i in range(samples[args.dataset])]  # 1-3号文件不存在用于演示错误处理
@@ -195,3 +192,5 @@ processed = process_samples(sample_list, filename, args.num, args.cache_algorith
 with open("/home/llm/experiment/dataset_Analysis_Modeling/output.log","a+") as f:
     f.write(f"TDP random read耗时 at {args.num},{args.cache_algorithm},memory_size:{args.memory}:{time.time() - start:.4f}秒\n") 
 
+
+# python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_TDP_loader.py cc3m 0 lru 0

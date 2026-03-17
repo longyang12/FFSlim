@@ -5,7 +5,7 @@ class DLinkedNode:
         self.prev = None
         self.next = None
 
-class FGFGLRUCache:
+class LRUCache:
     def __init__(self, capacity: int):
         self.cache = {}  # 哈希表细粒度存储 key:int,value:{image:bytes,captions:str}
         self.capacity = capacity

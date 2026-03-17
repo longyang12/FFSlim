@@ -70,7 +70,7 @@ class MinHeap:
         self.heap[i], self.heap[j] = self.heap[j], self.heap[i]
 
 
-class IACMACacheWithHeap:
+class DGIMIACMACacheWithHeap:
     def __init__(self, capacity: int):
         self.capacity = capacity
         self.index = {}  # 哈希表细粒度索引 key:int,value:(img,caption,obj_index)

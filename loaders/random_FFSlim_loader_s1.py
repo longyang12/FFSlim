@@ -2,15 +2,15 @@
 from ffrecord import FileReader
 import pickle
 import random
-from cgfg_lru import LRUCache
+from cache.ffslim_dgim_lru import LRUCache
 from cgfg_lfu import LFUCache
-from cgfg_iacma import IACMACache
-from cgfg_iacma_with_heap import IACMACacheWithHeap
-from fgfg_lru import FGFGLRUCache
+from cache.ffslim_dgim_iacma import IACMACache
+from cache.ffslim_dgim_iacma_with_heap import IACMACacheWithHeap
+from cache.ffslim_lru import FGFGLRUCache
 from fgfg_lfu import FGFGLFUCache
-from cgfg_iacma_with_memory import IACMACacheWithMemory
-from fgfg_coordl import CoorDL
-from fgfg_quiver import Quiver
+from cache.ffslim_dgim_iacma_with_memory import IACMACacheWithMemory
+from cache.ffslim_coordl import CoorDL
+from cache.ffslim_quiver import Quiver
 import argparse
 import os
 

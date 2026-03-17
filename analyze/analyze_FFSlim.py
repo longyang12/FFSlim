@@ -3,7 +3,7 @@ import pickle
 import os
 
 
-for dataset in ["flickr30k", "flickr30k_entities", "mscoco", "vqa2", "gqa", "cc3m", "MSRVTT", "Clotho", "Clotho_E"]:
+for dataset in ["cc3m","flickr30k", "flickr30k_entities", "mscoco", "vqa2", "gqa", "MSRVTT", "Clotho", "Clotho_E"]:
     file_path = f"/mnt/datasets/{dataset}_FFSlim/mscoco_caption.ffr"
 
     sample_num = 0
@@ -71,6 +71,6 @@ for dataset in ["flickr30k", "flickr30k_entities", "mscoco", "vqa2", "gqa", "cc3
     avg_size_ratio = avg_media_size/avg_text_size
 
     # 输出可以直接复制到excel的格式,avg_quantity_ratio保留1位小数、其他保留整数
-    if dataset == "flickr30k":
+    if dataset == "cc3m":
         print(f"dataset_FFSlim：\tsample_num\tmedia_num\tavg_sample_size\tavg_media_size\tavg_text_size\tavg_quantity_ratio\tavg_size_ratio")
     print(f"{dataset}_FFSlim：\t{sample_num}\t{media_num}\t{int(avg_sample_size)}\t{int(avg_media_size)}\t{int(avg_text_size)}\t{avg_quantity_ratio:.1f}\t{int(avg_size_ratio)}")

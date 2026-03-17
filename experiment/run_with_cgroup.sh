@@ -43,23 +43,23 @@ elif [[ $3 == "Clotho_E" ]]; then
 fi  # 只需一个闭合标记
 
 cat /sys/fs/cgroup/file_reader/memory.max
-echo $memory > /sys/fs/cgroup/file_reader/memory.max
-# echo max > /sys/fs/cgroup/file_reader/memory.max
+# echo $memory > /sys/fs/cgroup/file_reader/memory.max
+echo max > /sys/fs/cgroup/file_reader/memory.max
 cat /sys/fs/cgroup/file_reader/memory.max
 
 # 运行脚本
-if [ $# -gt 5 ]; then
+if [ $# -gt 6 ]; then
     # 多进程
-    echo "多进程:传入参数数量大于 5"
+    echo "多进程:传入参数数量大于 6"
     command="$1 $2 $3 $4 $5 $6 $7 $memory"
     echo $command
     cgexec -g memory:file_reader $1 $2 $3 $4 $5 $6 $7 $memory &
 else
     # 单进程 
-    echo "单进程:传入参数数量不超过 5"
-    command="$1 $2 $3 $4 $5 $memory"
+    echo "单进程:传入参数数量不超过 6"
+    command="$1 $2 $3 $4 $5 $6 $memory"
     echo $command
-    cgexec -g memory:file_reader $1 $2 $3 $4 $5 $memory &
+    cgexec -g memory:file_reader $1 $2 $3 $4 $5 $6 $memory &
 fi
 
 
@@ -69,7 +69,7 @@ ps -ef | grep "python3 /home/llm/experiment"
 # 监控缓存命中率
 PID=$(cat /sys/fs/cgroup/file_reader/cgroup.procs)
 echo "监控进程 PID: $PID"
-sudo perf stat -p $PID -e cache-misses,cache-references
+# sudo perf stat -p $PID -e cache-misses,cache-references
 
 # 批量删除进程
 # sudo kill $(ps -ef | grep "python3 /home/llm/experiment" | grep -v grep | awk '{print $2}')

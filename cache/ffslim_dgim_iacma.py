@@ -7,7 +7,7 @@ class IACMANode:
         self.value = value
         self.score = len(value["captions"]) - 1
 
-class IACMACache:
+class DGIMIACMACache:
     def __init__(self, capacity: int):
         self.capacity = capacity
         self.min_score = 10000

@@ -1,33 +1,30 @@
-# def calculate_initial_capacity(sample_count, avg_size, total_memory):
-#     """计算初始缓存容量
-#     :param sample_count: 数据集对象总数
-#     :param avg_size: 平均对象大小（字节）
-#     :param total_memory: 可用内存总量（字节）
-#     """
-#     # 基础容量 = 内存总量 / 平均对象大小
-#     base_capacity = total_memory // avg_size
-        
-#     # 根据数据集规模动态调整[3](@ref)
-#     x1 = 0.5  # 收益最大的拐点位置，根据经验
-#     x2 = 0.5  # 最多50%内存用于缓存，根据经验
+import bisect
+
+# 示例数据
+pre_sums = [(5, 0, 4), (10, 5, 9), (15, 10, 14), (20, 15, 19)]
+
+def find_index(pre_sums, x):
+    # 提取所有的“最大编号”创建一个虚拟数组（或者直接针对元组查找）
+    # 我们查找第一个“最大编号 >= x”的元素
+    # 由于元组比较是逐个字段进行的，我们可以利用这一点
     
-#     return min(sample_count * x1, int(base_capacity * x2))
-
-# def adjust_capacity(hit_rate, capacity, avg_size, total_memory):
-#     """动态调整缓存容量"""
-#     current_usage = capacity * avg_size / total_memory
-#     l1 = 0.3
-#     h1 = 0.8
-#     h2 = 0.7
-#     if hit_rate < l1 and current_usage < h2:  # 低命中率+低缓存分配
-#         new_capacity = min(int(total_memory/avg_size), int(capacity * 1.1))  # 扩容10%
-#     elif hit_rate > h1 and current_usage > h2:  # 高命中率+高缓存分配
-#         new_capacity = int(capacity * 0.9)      # 缩容10%
-#     elif hit_rate < l1 and current_usage > h2:  # 低命中率+高缓存分配
-#         new_capacity = 0  # 缓存无效，禁用缓存
-#     else:  # 稳定状态  高命中率+低缓存分配
-#         return
+    # 方式 A：手动二分（性能最强，无额外空间）
+    low = 0
+    high = len(pre_sums) - 1
+    
+    while low <= high:
+        mid = (low + high) // 2
+        node_sum, node_min, node_max = pre_sums[mid]
         
-#     return new_capacity
+        if node_min <= x <= node_max:
+            return mid
+        elif x < node_min:
+            high = mid - 1
+        else:
+            low = mid + 1
+    return -1
 
-
+# 测试
+x = 12
+idx = find_index(pre_sums, x)
+print(f"编号 {x} 在下标: {idx}, 对应元组: {pre_sums[idx]}")
