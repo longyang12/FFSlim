@@ -8,7 +8,7 @@ class CoorDL:
         self.cache = {}  # 哈希表细粒度存储 key:int,value:DLinkedNode
         self.capacity = capacity
 
-    def get(self, key: str) -> bytes:
+    def get(self, key: str, id: int) -> bytes:
         # 细粒度缓存索引
         if key not in self.cache:
             return -1
@@ -23,7 +23,7 @@ class CoorDL:
         node = DLinkedNode(key, value)
         self.cache[key] = node
 
-    def put(self, key: str, value: bytes) -> None:
+    def put(self, key: str, value: bytes, id: int) -> None:
         # 缓存空间不足
         if len(self.cache) >= self.capacity:
             return

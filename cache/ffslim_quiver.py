@@ -27,12 +27,12 @@ class Quiver:
         node.prev.next = node.next
         node.next.prev = node.prev
 
-    def get(self, key: int) -> dict:
+    def get(self, key: int, id: int = 0) -> dict:
         if key not in self.cache:
             return -1
         return self.cache[key].value
 
-    def put(self, key: int, value: dict) -> None:
+    def put(self, key: int, value: dict, id: int = 0) -> None:
         # 缓存细粒度存储
         for index,c in enumerate(value["captions"]):
             # 跳过重复缓存

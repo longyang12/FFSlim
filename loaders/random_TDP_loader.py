@@ -16,6 +16,8 @@ from cache.tdp_coordl import CoorDL
 from cache.tdp_iacma import IACMACache
 from cache.tdp_iacma_with_memory import IACMACacheWithMemory
 from cache.tdp_iacma_with_heap import IACMACacheWithHeap
+from cache.tdp_iacma_admission import IACMAAdmission
+from cache.tdp_iacma_with_memory_admission import IACMACacheWithMemoryAdmission
 
 
 
@@ -102,14 +104,21 @@ def process_samples(sample_ids, base_dir, num, cache_algorithm):
             cache = IACMACacheWithMemory(num, images)
         elif cache_algorithm == "iacma_with_heap":
             cache = IACMACacheWithHeap(num, images)
+        elif cache_algorithm == "iacma_admission":
+            cache = IACMAAdmission(num, images)
+        elif cache_algorithm == "iacma_with_memory_admission":
+            cache = IACMACacheWithMemoryAdmission(num, images)
+        else:
+            print(f"未知的缓存算法: {cache_algorithm}")
+            return
 
     hits = 0
     count = 0
-    
+    id = 0
     for sid in sample_ids:
         if num != 0:
             count += 1
-            img_data = cache.get(images[sid].split('.')[0])
+            img_data = cache.get(images[sid].split('.')[0], id)
             # 缓存命中
             if img_data != -1:
                 hits += 1
@@ -128,14 +137,19 @@ def process_samples(sample_ids, base_dir, num, cache_algorithm):
         else:
             print(f"图像文件 {images[sid]} 不存在")
         if num != 0:
-            cache.put(images[sid].split('.')[0],img_data)
+            cache.put(images[sid].split('.')[0],img_data, id)
         txt_data = captions[sid]
         result = (img_data,txt_data)
 
     if num != 0:
         with open("/home/llm/experiment/dataset_Analysis_Modeling/output.log","a+") as f:
             f.write(f"cache hits:{hits},requests:{count},cache hit rate:{hits/count}\n")
-
+        if args.cache_algorithm in ["iacma","iacma_with_memory","iacma_admission","iacma_with_memory_admission"]:
+            # 输出对象重要性
+            with open(f"/home/llm/experiment/dataset_Analysis_Modeling/object_importance_log/{args.dataset}_TDP_{args.num}_{args.cache_algorithm}_object_importance.log","w") as f:
+                f.write(f"dataset:{args.dataset}_TDP,num:{args.num},cache_algorithm:{args.cache_algorithm},cache hits:{hits},requests:{count},cache hit rate:{hits/count}\n")
+                for key, score_shifts in cache.get_object_importance().items():
+                    f.write(f"key:{key},score_shifts:{score_shifts}\n")
 
 # 创建解析器
 parser = argparse.ArgumentParser()
@@ -178,7 +192,7 @@ if args.dataset == "Clotho":
 if args.dataset == "Clotho_E":
     filename = "/mnt/datasets/Clotho_E_TDP"
 
-s
+
 samples = {"cc3m":256878,"flickr30k":155065,"flickr30k_entities":158910,"mscoco":589790,"vqa2":443757,"gqa":943000,"MSRVTT":200000,"Clotho":19690,"Clotho_E":98450}
 
 # 调用处理函数

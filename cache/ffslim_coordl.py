@@ -8,13 +8,13 @@ class CoorDL:
         self.cache = {}  # 哈希表细粒度存储 key:int,value:{image:bytes,captions:str}
         self.capacity = capacity
 
-    def get(self, key: int) -> tuple:
+    def get(self, key: int, id: int = 0) -> tuple:
         if key not in self.cache:
             return -1
         node = self.cache[key]
         return node.value
 
-    def put(self, key: int, value: dict) -> None:
+    def put(self, key: int, value: dict, id: int = 0) -> None:
         # 缓存空间不足
         if len(self.cache) >= self.capacity:
             return 

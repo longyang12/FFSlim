@@ -18,7 +18,8 @@ from cache.ffslim_dgim_quiver import DGIMQuiver
 from cache.ffslim_dgim_coordl import DGIMCoorDL
 from cache.ffslim_dgim_iacma import DGIMIACMACache
 from cache.ffslim_dgim_iacma_with_memory import DGIMIACMACacheWithMemory
-
+from cache.ffslim_dgim_iacma_admission import DGIMIACMAAdmissionCache
+from cache.ffslim_dgim_iacma_with_memory_admission import DGIMIACMAAdmissionCacheWithMemory
 
 # def find_index(x,pre_sums):
 #     # 计算全局累积长度中第一个 >=x 的索引
@@ -152,16 +153,21 @@ def process_samples(samples,batch_size,file_path,num,cache_algorithm):
             cache = DGIMIACMACache(num)
         elif cache_algorithm == "dgim_iacma_with_memory":
             cache = DGIMIACMACacheWithMemory(num)
+        elif cache_algorithm == "dgim_iacma_admission":
+            cache = DGIMIACMAAdmissionCache(num)
+        elif cache_algorithm == "dgim_iacma_with_memory_admission":
+            cache = DGIMIACMAAdmissionCacheWithMemory(num)   
         hits = 0
         count = 0
 
     index_time = []
+    id = 0
     for batch in batch_samples_list:
         # print(f"batch:{batch}")
         for i in batch:
             if num != 0:
                 count += 1
-                result = cache.get(i)
+                result = cache.get(i,id)
                 # 缓存命中
                 if result != -1:
                     hits += 1
@@ -177,7 +183,7 @@ def process_samples(samples,batch_size,file_path,num,cache_algorithm):
                     samples1 = pickle.loads(sample)
                     result = [samples1["image"],samples1["captions"][temp[1]]]
                     if num != 0:
-                        cache.put(i-temp[1],samples1)
+                        cache.put(i-temp[1],samples1,id)
             # 根据自适应索引检索
             elif args.index_structure=="adaptive_index":
                 if args.dataset in ["cc3m","flickr30k","flickr30k_entities","mscoco","MSRVTT","Clotho","Clotho_E"]:
@@ -194,7 +200,7 @@ def process_samples(samples,batch_size,file_path,num,cache_algorithm):
                         samples1 = pickle.loads(sample)
                         result = [samples1["image"],samples1["captions"][temp[1]]]
                         if num != 0:
-                            cache.put(i-i%X,samples1)
+                            cache.put(i-i%X,samples1,id)
                 else:
                     # 完全平衡二叉搜索树
                     start = time.time()
@@ -209,14 +215,20 @@ def process_samples(samples,batch_size,file_path,num,cache_algorithm):
                         # if i == 1:
                         #     print(f'image:{type(samples1["image"])},caption:{type(samples1["captions"][0])}')
                         if num != 0:
-                            cache.put(i-temp[1],samples1)
+                            cache.put(i-temp[1],samples1,id)
+            id += 1
 
     with open(f"/home/llm/experiment/dataset_Analysis_Modeling/output.log","a+") as f:
         f.write(f"index_time={sum(index_time):.4f}\n")
     if num != 0:
         with open(f"/home/llm/experiment/dataset_Analysis_Modeling/output.log","a+") as f:
             f.write(f"cache hits:{hits},requests:{count},cache hit rate:{hits/count}\n")
-
+        if args.cache_algorithm in ["dgim_iacma","dgim_iacma_with_memory","dgim_iacma_admission","dgim_iacma_with_memory_admission"]:
+            # 输出对象重要性
+            with open(f"/home/llm/experiment/dataset_Analysis_Modeling/object_importance_log/{args.dataset}_FFSlim_{args.num}_{args.cache_algorithm}_object_importance.log","w") as f:
+                f.write(f"dataset:{args.dataset}_FFSlim,num:{args.num},cache_algorithm:{args.cache_algorithm},cache hits:{hits},requests:{count},cache hit rate:{hits/count}\n")
+                for key, score_shifts in cache.get_object_importance().items():
+                    f.write(f"key:{key},score_shifts:{score_shifts}\n")
 
 # 创建解析器
 parser = argparse.ArgumentParser()
@@ -232,7 +244,7 @@ parser.add_argument('memory', type=int, help='输入限制内存容量大小')
 # 解析参数
 args = parser.parse_args()
 with open(f"/home/llm/experiment/dataset_Analysis_Modeling/output.log","a+") as f:
-    f.write(f"dataset:{args.dataset},num:{args.num},cache_algorithm:{args.cache_algorithm},index_structure:{args.index_structure},memory_size:{args.memory}\n")
+    f.write(f"dataset:{args.dataset}_FFSlim,num:{args.num},cache_algorithm:{args.cache_algorithm},index_structure:{args.index_structure},memory_size:{args.memory}\n")
 
 
 # cc3m
@@ -283,4 +295,4 @@ with open(f"/home/llm/experiment/dataset_Analysis_Modeling/output.log","a+") as 
 
 
 # test
-# python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_FFSlim_loader.py cc3m 0 lru adaptive_index 0
+# python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_FFSlim_loader.py cc3m 102751 dgim_iacma adaptive_index 0

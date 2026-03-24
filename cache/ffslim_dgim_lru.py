@@ -28,7 +28,7 @@ class DGIMLRUCache:
         node.prev.next = node.next
         node.next.prev = node.prev
 
-    def get(self, key: int) -> tuple:
+    def get(self, key: int, id: int = 0) -> tuple:
         # 细粒度缓存索引
         if key not in self.index:
             return -1
@@ -44,7 +44,7 @@ class DGIMLRUCache:
         #         f.write(f"==not in cache==key:{key},obj_index={obj_index}\n") 
         return result[:-1]
 
-    def put(self, key: int, value: dict) -> None:
+    def put(self, key: int, value: dict, id: int = 0) -> None:
         # 缓存空间不足
         if len(self.cache) >= self.capacity:
             lru_node = self.head.next  # 淘汰链表头部的节点

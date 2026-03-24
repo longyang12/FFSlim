@@ -9,14 +9,14 @@ class DGIMCoorDL:
         self.cache = {}  # 哈希表粗粒度存储 key:int,value:{image:bytes,captions:[]}
         self.capacity = capacity
 
-    def get(self, key: int) -> tuple:
+    def get(self, key: int, id: int = 0) -> tuple:
         # 细粒度缓存索引
         if key not in self.index:
             return -1
         result = self.index[key]
         return result[:-1]
 
-    def put(self, key: int, value: dict) -> None:
+    def put(self, key: int, value: dict, id: int = 0) -> None:
         # 缓存空间不足
         if len(self.cache) >= self.capacity:
             return 

@@ -26,13 +26,13 @@ class Quiver:
         node.prev.next = node.next
         node.next.prev = node.prev
 
-    def get(self, key: str) -> bytes:
+    def get(self, key: str, id: int) -> bytes:
         if key not in self.cache:
             return -1
         node = self.cache[key]
         return node.value
 
-    def put(self, key: str, value: bytes) -> None:
+    def put(self, key: str, value: bytes, id: int) -> None:
         # 缓存空间不足
         if len(self.cache) >= self.capacity:
             fifo_node = self.head.next
