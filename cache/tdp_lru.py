@@ -26,7 +26,7 @@ class LRUCache:
         node.prev.next = node.next
         node.next.prev = node.prev
 
-    def get(self, key: str) -> bytes:
+    def get(self, key: str, id: int) -> bytes:
         # 细粒度缓存索引
         if key not in self.cache:
             return -1
@@ -38,7 +38,7 @@ class LRUCache:
         #     f.write(f"==get==key:{key}\n")
         return node.value
 
-    def put(self, key: str, value: bytes) -> None:
+    def put(self, key: str, value: bytes, id: int) -> None:
         # 缓存空间不足
         if len(self.cache) >= self.capacity:
             lru_node = self.head.next  # 淘汰链表头部的节点

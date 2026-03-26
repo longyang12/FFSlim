@@ -140,7 +140,8 @@ def process_samples(sample_ids, base_dir, num, cache_algorithm):
             cache.put(images[sid].split('.')[0],img_data, id)
         txt_data = captions[sid]
         result = (img_data,txt_data)
-
+        id += 1
+        
     if num != 0:
         with open("/home/llm/experiment/dataset_Analysis_Modeling/output.log","a+") as f:
             f.write(f"cache hits:{hits},requests:{count},cache hit rate:{hits/count}\n")

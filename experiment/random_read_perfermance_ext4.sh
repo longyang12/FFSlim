@@ -69,15 +69,35 @@ sudo blockdev --getra /dev/nvme2n1
 ####### cache on FFSlim #######
 ###############################
 
+datasets=("cc3m" "flickr30k" "flickr30k_entities" "mscoco" "vqa2" "gqa" "MSRVTT" "Clotho" "Clotho_E")
+counts=("102751" "12405" "12713" "47183" "33109" "28856" "4000" "1575" "7876")
+
+
+for i in "${!datasets[@]}"; do
+    for cache_algorithm in lru quiver coordl dgim_lru dgim_quiver dgim_coordl dgim_iacma dgim_iacma_admission dgim_iacma_with_memory dgim_iacma_with_memory_admission; do
+    # for cache_algorithm in dgim_iacma dgim_iacma_admission dgim_iacma_with_memory dgim_iacma_with_memory_admission; do
+        echo " sudo ./run_with_cgroup.sh python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_FFSlim_loader.py ${datasets[$i]} ${counts[$i]} ${cache_algorithm} adaptive_index"
+        sudo ./run_with_cgroup.sh python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_FFSlim_loader.py ${datasets[$i]} ${counts[$i]} ${cache_algorithm} adaptive_index     
+        while [ $(wc -c < "/sys/fs/cgroup/file_reader/cgroup.procs") -gt 0 ]; do
+            sleep 1  # 每秒检查一次
+        done
+        echo "cgroup 内所有进程已结束"
+    done
+done
+
+
+###############################
+######### cache on TDP ########
+###############################
+
 # datasets=("cc3m" "flickr30k" "flickr30k_entities" "mscoco" "vqa2" "gqa" "MSRVTT" "Clotho" "Clotho_E")
 # counts=("102751" "12405" "12713" "47183" "33109" "28856" "4000" "1575" "7876")
 
-
 # for i in "${!datasets[@]}"; do
-#     # for cache_algorithm in lru quiver coordl dgim_lru dgim_quiver dgim_coordl dgim_iacma dgim_iacma_admission dgim_iacma_with_memory dgim_iacma_with_memory_admission; do
-#     for cache_algorithm in dgim_iacma dgim_iacma_admission dgim_iacma_with_memory dgim_iacma_with_memory_admission; do
-#         echo " sudo ./run_with_cgroup.sh python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_FFSlim_loader.py ${datasets[$i]} ${counts[$i]} ${cache_algorithm} adaptive_index"
-#         sudo ./run_with_cgroup.sh python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_FFSlim_loader.py ${datasets[$i]} ${counts[$i]} ${cache_algorithm} adaptive_index     
+#     for cache_algorithm in lru quiver coordl iacma iacma_admission iacma_with_memory iacma_with_memory_admission; do
+#     # for cache_algorithm in iacma iacma_admission iacma_with_memory iacma_with_memory_admission; do
+#         echo " sudo ./run_with_cgroup.sh python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_TDP_loader.py ${datasets[$i]} ${counts[$i]} ${cache_algorithm}"
+#         sudo ./run_with_cgroup.sh python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_TDP_loader.py ${datasets[$i]} ${counts[$i]} ${cache_algorithm}     
 #         while [ $(wc -c < "/sys/fs/cgroup/file_reader/cgroup.procs") -gt 0 ]; do
 #             sleep 1  # 每秒检查一次
 #         done
@@ -86,94 +106,74 @@ sudo blockdev --getra /dev/nvme2n1
 # done
 
 
-###############################
-######### cache on TDP ########
-###############################
-
-datasets=("cc3m" "flickr30k" "flickr30k_entities" "mscoco" "vqa2" "gqa" "MSRVTT" "Clotho" "Clotho_E")
-counts=("102751" "12405" "12713" "47183" "33109" "28856" "4000" "1575" "7876")
-
-for i in "${!datasets[@]}"; do
-    # for cache_algorithm in lru quiver coordl iacma iacma_admission iacma_with_memory iacma_with_memory_admission; do
-    for cache_algorithm in iacma iacma_admission iacma_with_memory iacma_with_memory_admission; do
-        echo " sudo ./run_with_cgroup.sh python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_TDP_loader.py ${datasets[$i]} ${counts[$i]} ${cache_algorithm}"
-        sudo ./run_with_cgroup.sh python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_TDP_loader.py ${datasets[$i]} ${counts[$i]} ${cache_algorithm}     
-        while [ $(wc -c < "/sys/fs/cgroup/file_reader/cgroup.procs") -gt 0 ]; do
-            sleep 1  # 每秒检查一次
-        done
-        echo "cgroup 内所有进程已结束"
-    done
-done
-
-
 ###########################################
 ######## cache on diff cache size  ########
 ###########################################
 
-# FFSlim
-# Flickr30k
-for cache_size in 3101 6203 9304 12405 15507 18608 21709 24810 27912 31013
-do
-    # for cache_algorithm in lru quiver coordl dgim_lru dgim_quiver dgim_coordl dgim_iacma dgim_iacma_admission dgim_iacma_with_memory dgim_iacma_with_memory_admission
-    # do
-    for cache_algorithm in dgim_iacma dgim_iacma_admission dgim_iacma_with_memory dgim_iacma_with_memory_admission
-    do
-        echo " sudo ./run_with_cgroup.sh python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_FFSlim_loader.py flickr30k $cache_size $cache_algorithm adaptive_index"
-        sudo ./run_with_cgroup.sh python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_FFSlim_loader.py flickr30k $cache_size $cache_algorithm adaptive_index     
-        while [ $(wc -c < "/sys/fs/cgroup/file_reader/cgroup.procs") -gt 0 ]; do
-            sleep 1  # 每秒检查一次
-        done
-        echo "cgroup 内所有进程已结束"
-    done
-done
-# GQA
-for cache_size in 7214 14428 21642 28856 36070 43283 50497 57711 64925 72139
-do
-    # for cache_algorithm in lru quiver coordl dgim_lru dgim_quiver dgim_coordl dgim_iacma dgim_iacma_admission dgim_iacma_with_memory dgim_iacma_with_memory_admission
-    # do
-    for cache_algorithm in dgim_iacma dgim_iacma_admission dgim_iacma_with_memory dgim_iacma_with_memory_admission
-    do
-        echo " sudo ./run_with_cgroup.sh python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_FFSlim_loader.py gqa $cache_size $cache_algorithm adaptive_index"
-        sudo ./run_with_cgroup.sh python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_FFSlim_loader.py gqa $cache_size $cache_algorithm adaptive_index     
-        while [ $(wc -c < "/sys/fs/cgroup/file_reader/cgroup.procs") -gt 0 ]; do
-            sleep 1  # 每秒检查一次
-        done
-        echo "cgroup 内所有进程已结束"
-    done
-done
+# # FFSlim
+# # Flickr30k
+# for cache_size in 3101 6203 9304 12405 15507 18608 21709 24810 27912 31013
+# do
+#     # for cache_algorithm in lru quiver coordl dgim_lru dgim_quiver dgim_coordl dgim_iacma dgim_iacma_admission dgim_iacma_with_memory dgim_iacma_with_memory_admission
+#     # do
+#     for cache_algorithm in dgim_iacma dgim_iacma_admission dgim_iacma_with_memory dgim_iacma_with_memory_admission
+#     do
+#         echo " sudo ./run_with_cgroup.sh python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_FFSlim_loader.py flickr30k $cache_size $cache_algorithm adaptive_index"
+#         sudo ./run_with_cgroup.sh python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_FFSlim_loader.py flickr30k $cache_size $cache_algorithm adaptive_index     
+#         while [ $(wc -c < "/sys/fs/cgroup/file_reader/cgroup.procs") -gt 0 ]; do
+#             sleep 1  # 每秒检查一次
+#         done
+#         echo "cgroup 内所有进程已结束"
+#     done
+# done
+# # GQA
+# for cache_size in 7214 14428 21642 28856 36070 43283 50497 57711 64925 72139
+# do
+#     # for cache_algorithm in lru quiver coordl dgim_lru dgim_quiver dgim_coordl dgim_iacma dgim_iacma_admission dgim_iacma_with_memory dgim_iacma_with_memory_admission
+#     # do
+#     for cache_algorithm in dgim_iacma dgim_iacma_admission dgim_iacma_with_memory dgim_iacma_with_memory_admission
+#     do
+#         echo " sudo ./run_with_cgroup.sh python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_FFSlim_loader.py gqa $cache_size $cache_algorithm adaptive_index"
+#         sudo ./run_with_cgroup.sh python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_FFSlim_loader.py gqa $cache_size $cache_algorithm adaptive_index     
+#         while [ $(wc -c < "/sys/fs/cgroup/file_reader/cgroup.procs") -gt 0 ]; do
+#             sleep 1  # 每秒检查一次
+#         done
+#         echo "cgroup 内所有进程已结束"
+#     done
+# done
 
 
-# TDP
-# Flickr30k
-for cache_size in 3101 6203 9304 12405 15507 18608 21709 24810 27912 31013
-do
-    # for cache_algorithm in lru quiver coordl iacma iacma_admission iacma_with_memory iacma_with_memory_admission
-    # do
-    for cache_algorithm in iacma iacma_admission iacma_with_memory iacma_with_memory_admission
-    do
-        echo " sudo ./run_with_cgroup.sh python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_TDP_loader.py flickr30k $cache_size $cache_algorithm"
-        sudo ./run_with_cgroup.sh python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_TDP_loader.py flickr30k $cache_size $cache_algorithm     
-        while [ $(wc -c < "/sys/fs/cgroup/file_reader/cgroup.procs") -gt 0 ]; do
-            sleep 1  # 每秒检查一次
-        done
-        echo "cgroup 内所有进程已结束"
-    done
-done
-# GQA
-for cache_size in 7214 14428 21642 28856 36070 43283 50497 57711 64925 72139
-do
-    # for cache_algorithm in lru quiver coordl iacma iacma_admission iacma_with_memory iacma_with_memory_admission
-    # do
-    for cache_algorithm in iacma iacma_admission iacma_with_memory iacma_with_memory_admission
-    do
-        echo " sudo ./run_with_cgroup.sh python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_TDP_loader.py gqa $cache_size $cache_algorithm"
-        sudo ./run_with_cgroup.sh python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_TDP_loader.py gqa $cache_size $cache_algorithm     
-        while [ $(wc -c < "/sys/fs/cgroup/file_reader/cgroup.procs") -gt 0 ]; do
-            sleep 1  # 每秒检查一次
-        done
-        echo "cgroup 内所有进程已结束"
-    done
-done
+# # TDP
+# # Flickr30k
+# for cache_size in 3101 6203 9304 12405 15507 18608 21709 24810 27912 31013
+# do
+#     # for cache_algorithm in lru quiver coordl iacma iacma_admission iacma_with_memory iacma_with_memory_admission
+#     # do
+#     for cache_algorithm in iacma iacma_admission iacma_with_memory iacma_with_memory_admission
+#     do
+#         echo " sudo ./run_with_cgroup.sh python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_TDP_loader.py flickr30k $cache_size $cache_algorithm"
+#         sudo ./run_with_cgroup.sh python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_TDP_loader.py flickr30k $cache_size $cache_algorithm     
+#         while [ $(wc -c < "/sys/fs/cgroup/file_reader/cgroup.procs") -gt 0 ]; do
+#             sleep 1  # 每秒检查一次
+#         done
+#         echo "cgroup 内所有进程已结束"
+#     done
+# done
+# # GQA
+# for cache_size in 7214 14428 21642 28856 36070 43283 50497 57711 64925 72139
+# do
+#     # for cache_algorithm in lru quiver coordl iacma iacma_admission iacma_with_memory iacma_with_memory_admission
+#     # do
+#     for cache_algorithm in iacma iacma_admission iacma_with_memory iacma_with_memory_admission
+#     do
+#         echo " sudo ./run_with_cgroup.sh python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_TDP_loader.py gqa $cache_size $cache_algorithm"
+#         sudo ./run_with_cgroup.sh python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_TDP_loader.py gqa $cache_size $cache_algorithm     
+#         while [ $(wc -c < "/sys/fs/cgroup/file_reader/cgroup.procs") -gt 0 ]; do
+#             sleep 1  # 每秒检查一次
+#         done
+#         echo "cgroup 内所有进程已结束"
+#     done
+# done
 
 
 

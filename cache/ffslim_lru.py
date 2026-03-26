@@ -54,7 +54,7 @@ class LRUCache:
                 del self.cache[lru_node.key]
             # 细粒度缓存存储
             # print(f"index:{index}")
-            temp = {"image":value["image"]+index.to_bytes(length=2),"caption":c}
+            temp = {"image":value["image"]+index.to_bytes(length=2,byteorder="big"),"caption":c}
             node = DLinkedNode(key+index, temp)
             self.cache[key+index] = node
             self._add_node(node)
