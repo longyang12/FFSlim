@@ -90,20 +90,20 @@ done
 ######### cache on TDP ########
 ###############################
 
-# datasets=("cc3m" "flickr30k" "flickr30k_entities" "mscoco" "vqa2" "gqa" "MSRVTT" "Clotho" "Clotho_E")
-# counts=("102751" "12405" "12713" "47183" "33109" "28856" "4000" "1575" "7876")
+datasets=("cc3m" "flickr30k" "flickr30k_entities" "mscoco" "vqa2" "gqa" "MSRVTT" "Clotho" "Clotho_E")
+counts=("102751" "12405" "12713" "47183" "33109" "28856" "4000" "1575" "7876")
 
-# for i in "${!datasets[@]}"; do
-#     for cache_algorithm in lru quiver coordl iacma iacma_admission iacma_with_memory iacma_with_memory_admission; do
-#     # for cache_algorithm in iacma iacma_admission iacma_with_memory iacma_with_memory_admission; do
-#         echo " sudo ./run_with_cgroup.sh python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_TDP_loader.py ${datasets[$i]} ${counts[$i]} ${cache_algorithm}"
-#         sudo ./run_with_cgroup.sh python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_TDP_loader.py ${datasets[$i]} ${counts[$i]} ${cache_algorithm}     
-#         while [ $(wc -c < "/sys/fs/cgroup/file_reader/cgroup.procs") -gt 0 ]; do
-#             sleep 1  # 每秒检查一次
-#         done
-#         echo "cgroup 内所有进程已结束"
-#     done
-# done
+for i in "${!datasets[@]}"; do
+    for cache_algorithm in lru quiver coordl iacma iacma_admission iacma_with_memory iacma_with_memory_admission; do
+    # for cache_algorithm in iacma iacma_admission iacma_with_memory iacma_with_memory_admission; do
+        echo " sudo ./run_with_cgroup.sh python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_TDP_loader.py ${datasets[$i]} ${counts[$i]} ${cache_algorithm}"
+        sudo ./run_with_cgroup.sh python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_TDP_loader.py ${datasets[$i]} ${counts[$i]} ${cache_algorithm}     
+        while [ $(wc -c < "/sys/fs/cgroup/file_reader/cgroup.procs") -gt 0 ]; do
+            sleep 1  # 每秒检查一次
+        done
+        echo "cgroup 内所有进程已结束"
+    done
+done
 
 
 ###########################################

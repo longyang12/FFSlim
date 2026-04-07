@@ -1,0 +1,21 @@
+###############FFSlim####################
+Important forget ratio on FFSLim（40% cache size）			
+Workload	DGIM-IACMA-DFR	DGIM-IACMA-SFR	DGIM-IACMA-FFR
+Flickr30k	27.14%	17.99%	45.13%
+F30-E	27.23%	17.76%	44.99%
+MSCOCO	27.17%	17.89%	45.07%
+Clotho	27.19%	17.87%	45.07%
+MSRVTT	36.80%	19.21%	56.01%
+VQA2	10.72%	15.32%	26.04%
+GQA	7.23%	18.52%	25.75%
+
+###############TDP####################
+Important forget ratio on TDP（40% cache size）			
+Workload	IACMA-DFR	IACMA-SFR	IACMA-FFR
+Flickr30k	27.14%	17.99%	45.13%
+F30-E	27.23%	17.76%	44.99%
+MSCOCO	27.17%	17.89%	45.07%
+Clotho	27.19%	17.87%	45.07%
+MSRVTT	36.80%	19.21%	56.01%
+VQA2	10.72%	15.32%	26.04%
+GQA	7.23%	18.52%	25.75%

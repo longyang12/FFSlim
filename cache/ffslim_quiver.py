@@ -1,3 +1,4 @@
+import copy
 class DLinkedNode:
     def __init__(self, key=0, value={"image": b"", "caption": ""}):
         self.key = key
@@ -44,7 +45,10 @@ class Quiver:
                 self._remove_node(fifo_node)
                 del self.cache[fifo_node.key]
             # 细粒度缓存存储
-            temp = {"image":value["image"]+index.to_bytes(length=2),"caption":c}
+            if index > 0:
+                temp = {"image":copy.deepcopy(value["image"]),"caption":c}
+            else:
+                temp = {"image":value["image"],"caption":c}
             node = DLinkedNode(key+index, temp)
             self.cache[key+index] = node
             self._add_node(node)

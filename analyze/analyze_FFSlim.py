@@ -1,6 +1,12 @@
 from ffrecord import FileReader
 import pickle
 import os
+import statistics
+import pandas as pd
+
+
+output_dir = "/home/llm/experiment/dataset_Analysis_Modeling/analyze/output"
+results = []
 
 
 for dataset in ["cc3m","flickr30k", "flickr30k_entities", "mscoco", "vqa2", "gqa", "MSRVTT", "Clotho", "Clotho_E"]:
@@ -13,6 +19,11 @@ for dataset in ["cc3m","flickr30k", "flickr30k_entities", "mscoco", "vqa2", "gqa
     avg_text_size = 0
     avg_quantity_ratio = 0
     avg_size_ratio = 0
+    std_sample_size = 0
+    std_media_size = 0
+    std_text_size = 0
+    std_quantity_ratio = 0
+    std_size_ratio = 0
 
     sample_size_nums = []
     media_size_nums = []
@@ -70,7 +81,44 @@ for dataset in ["cc3m","flickr30k", "flickr30k_entities", "mscoco", "vqa2", "gqa
     avg_quantity_ratio = sum(ratio_nums)/len(ratio_nums)
     avg_size_ratio = avg_media_size/avg_text_size
 
-    # 输出可以直接复制到excel的格式,avg_quantity_ratio保留1位小数、其他保留整数
+    std_sample_size = statistics.pstdev(sample_size_nums)
+    std_media_size = statistics.pstdev(media_size_nums)
+    std_text_size = statistics.pstdev(text_size_nums)
+    std_quantity_ratio = statistics.pstdev(ratio_nums)
+    size_ratio_nums = [
+        (sample_size_nums[i] - text_size_nums[i]) / text_size_nums[i]
+        for i in range(len(sample_size_nums)) if text_size_nums[i] > 0
+    ]
+    std_size_ratio = statistics.pstdev(size_ratio_nums) if size_ratio_nums else 0
+
+    # 输出可以直接复制到excel的格式，均值延续原格式，标准差保留2位小数
     if dataset == "cc3m":
-        print(f"dataset_FFSlim：\tsample_num\tmedia_num\tavg_sample_size\tavg_media_size\tavg_text_size\tavg_quantity_ratio\tavg_size_ratio")
-    print(f"{dataset}_FFSlim：\t{sample_num}\t{media_num}\t{int(avg_sample_size)}\t{int(avg_media_size)}\t{int(avg_text_size)}\t{avg_quantity_ratio:.1f}\t{int(avg_size_ratio)}")
+        print(
+            f"dataset_FFSlim：\tsample_num\tmedia_num\tavg_sample_size\tstd_sample_size\tavg_media_size\tstd_media_size\tavg_text_size\tstd_text_size\tavg_quantity_ratio\tstd_quantity_ratio\tavg_size_ratio\tstd_size_ratio"
+        )
+    print(
+        f"{dataset}_FFSlim：\t{sample_num}\t{media_num}\t{int(avg_sample_size)}\t{std_sample_size:.2f}\t{int(avg_media_size)}\t{std_media_size:.2f}\t{int(avg_text_size)}\t{std_text_size:.2f}\t{avg_quantity_ratio:.1f}\t{std_quantity_ratio:.2f}\t{int(avg_size_ratio)}\t{std_size_ratio:.2f}"
+    )
+
+    results.append(
+        {
+            "dataset": f"{dataset}_FFSlim",
+            "sample_num": sample_num,
+            "media_num": media_num,
+            "avg_sample_size": int(avg_sample_size),
+            "std_sample_size": round(std_sample_size, 2),
+            "avg_media_size": int(avg_media_size),
+            "std_media_size": round(std_media_size, 2),
+            "avg_text_size": int(avg_text_size),
+            "std_text_size": round(std_text_size, 2),
+            "avg_quantity_ratio": round(avg_quantity_ratio, 1),
+            "std_quantity_ratio": round(std_quantity_ratio, 2),
+            "avg_size_ratio": int(avg_size_ratio),
+            "std_size_ratio": round(std_size_ratio, 2),
+        }
+    )
+
+df = pd.DataFrame(results)
+excel_path = os.path.join(output_dir, "FFSlim_statistics.xlsx")
+df.to_excel(excel_path, index=False)
+print(f"Excel已输出：{excel_path}")

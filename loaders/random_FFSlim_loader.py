@@ -5,6 +5,7 @@ import random
 import sys
 import os
 import argparse
+import time
 
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -95,6 +96,7 @@ def warm_up(cache,num,reader,pre_sums):
                 cache.put(i-temp[1],samples1)
 
 def process_samples(samples,batch_size,file_path,num,cache_algorithm):
+    process_begin = time.perf_counter()
     # 构建batch阶段
     n = len(samples)//batch_size
     m = len(samples)%batch_size
@@ -159,6 +161,10 @@ def process_samples(samples,batch_size,file_path,num,cache_algorithm):
             cache = DGIMIACMAAdmissionCacheWithMemory(num)   
         hits = 0
         count = 0
+        cache_get_calls = 0
+        cache_put_calls = 0
+        cache_get_overhead = 0.0
+        cache_put_overhead = 0.0
 
     index_time = []
     id = 0
@@ -167,7 +173,10 @@ def process_samples(samples,batch_size,file_path,num,cache_algorithm):
         for i in batch:
             if num != 0:
                 count += 1
+                cache_get_start = time.perf_counter()
                 result = cache.get(i,id)
+                cache_get_overhead += time.perf_counter() - cache_get_start
+                cache_get_calls += 1
                 # 缓存命中
                 if result != -1:
                     hits += 1
@@ -183,7 +192,10 @@ def process_samples(samples,batch_size,file_path,num,cache_algorithm):
                     samples1 = pickle.loads(sample)
                     result = [samples1["image"],samples1["captions"][temp[1]]]
                     if num != 0:
-                        cache.put(i-temp[1],samples1,id)
+                            cache_put_start = time.perf_counter()
+                            cache.put(i-temp[1],samples1,id)
+                            cache_put_overhead += time.perf_counter() - cache_put_start
+                            cache_put_calls += 1
             # 根据自适应索引检索
             elif args.index_structure=="adaptive_index":
                 if args.dataset in ["cc3m","flickr30k","flickr30k_entities","mscoco","MSRVTT","Clotho","Clotho_E"]:
@@ -200,7 +212,10 @@ def process_samples(samples,batch_size,file_path,num,cache_algorithm):
                         samples1 = pickle.loads(sample)
                         result = [samples1["image"],samples1["captions"][temp[1]]]
                         if num != 0:
+                            cache_put_start = time.perf_counter()
                             cache.put(i-i%X,samples1,id)
+                            cache_put_overhead += time.perf_counter() - cache_put_start
+                            cache_put_calls += 1
                 else:
                     # 完全平衡二叉搜索树
                     start = time.time()
@@ -215,14 +230,30 @@ def process_samples(samples,batch_size,file_path,num,cache_algorithm):
                         # if i == 1:
                         #     print(f'image:{type(samples1["image"])},caption:{type(samples1["captions"][0])}')
                         if num != 0:
+                            cache_put_start = time.perf_counter()
                             cache.put(i-temp[1],samples1,id)
+                            cache_put_overhead += time.perf_counter() - cache_put_start
+                            cache_put_calls += 1
             id += 1
 
     with open(f"/home/llm/experiment/dataset_Analysis_Modeling/output.log","a+") as f:
         f.write(f"index_time={sum(index_time):.4f}\n")
     if num != 0:
+        process_total = time.perf_counter() - process_begin
+        cache_overhead_total = cache_get_overhead + cache_put_overhead
+        avg_get_us = (cache_get_overhead / cache_get_calls * 1e6) if cache_get_calls else 0.0
+        avg_put_us = (cache_put_overhead / cache_put_calls * 1e6) if cache_put_calls else 0.0
         with open(f"/home/llm/experiment/dataset_Analysis_Modeling/output.log","a+") as f:
             f.write(f"cache hits:{hits},requests:{count},cache hit rate:{hits/count}\n")
+            f.write(
+                "cache mgmt overhead: "
+                f"get_calls={cache_get_calls},put_calls={cache_put_calls},"
+                f"get_total={cache_get_overhead:.6f}s,put_total={cache_put_overhead:.6f}s,\n"
+                f"avg_get={avg_get_us:.2f}us,avg_put={avg_put_us:.2f}us,"
+                f"cache_total={cache_overhead_total:.6f}s,"
+                f"process_total={process_total:.6f}s,"
+                f"cache_overhead_ratio={cache_overhead_total/process_total:.6f}\n"
+            )
         if args.cache_algorithm in ["dgim_iacma","dgim_iacma_with_memory","dgim_iacma_admission","dgim_iacma_with_memory_admission"]:
             # 输出对象重要性
             with open(f"/home/llm/experiment/dataset_Analysis_Modeling/object_importance_log/{args.dataset}_FFSlim_{args.num}_{args.cache_algorithm}_object_importance.log","w") as f:
@@ -287,7 +318,6 @@ batch_size = 64
 random.seed(123)
 random.shuffle(sample_list)
 
-import time
 start = time.time()
 process_samples(sample_list,batch_size,filename,args.num,args.cache_algorithm)
 with open(f"/home/llm/experiment/dataset_Analysis_Modeling/output.log","a+") as f:
@@ -295,4 +325,4 @@ with open(f"/home/llm/experiment/dataset_Analysis_Modeling/output.log","a+") as 
 
 
 # test
-# python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_FFSlim_loader.py cc3m 102751 dgim_iacma adaptive_index 0
+# sudo python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_FFSlim_loader.py flickr30k  12405  dgim_iacma adaptive_index 0

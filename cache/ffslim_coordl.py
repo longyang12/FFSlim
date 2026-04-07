@@ -1,3 +1,4 @@
+import copy
 class DLinkedNode:
     def __init__(self, key=0, value={"image":0,"caption":0}):
         self.key = key
@@ -27,7 +28,10 @@ class CoorDL:
             if len(self.cache) >= self.capacity:
                 return
             # 细粒度缓存存储
-            temp = {"image":value["image"]+index.to_bytes(length=2),"caption":c}
+            if index > 0:
+                temp = {"image":copy.deepcopy(value["image"]),"caption":c}
+            else:
+                temp = {"image":value["image"],"caption":c}
             node = DLinkedNode(key+index, temp)
             self.cache[key+index] = node
 

@@ -5,6 +5,7 @@ import pandas as pd
 import mmap
 import sys
 import argparse
+import time
 
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -79,6 +80,7 @@ def warm_up(cache, num, images, base_dir):
 
 
 def process_samples(sample_ids, base_dir, num, cache_algorithm):
+    process_begin = time.perf_counter()
     csv_path = os.path.join(base_dir,base_dir.split("/")[-1]+".csv")
     df = pd.read_csv(csv_path)
 
@@ -111,6 +113,10 @@ def process_samples(sample_ids, base_dir, num, cache_algorithm):
         else:
             print(f"未知的缓存算法: {cache_algorithm}")
             return
+        cache_get_calls = 0
+        cache_put_calls = 0
+        cache_get_overhead = 0.0
+        cache_put_overhead = 0.0
 
     hits = 0
     count = 0
@@ -118,7 +124,10 @@ def process_samples(sample_ids, base_dir, num, cache_algorithm):
     for sid in sample_ids:
         if num != 0:
             count += 1
+            cache_get_start = time.perf_counter()
             img_data = cache.get(images[sid].split('.')[0], id)
+            cache_get_overhead += time.perf_counter() - cache_get_start
+            cache_get_calls += 1
             # 缓存命中
             if img_data != -1:
                 hits += 1
@@ -137,14 +146,31 @@ def process_samples(sample_ids, base_dir, num, cache_algorithm):
         else:
             print(f"图像文件 {images[sid]} 不存在")
         if num != 0:
+            cache_put_start = time.perf_counter()
             cache.put(images[sid].split('.')[0],img_data, id)
+            cache_put_overhead += time.perf_counter() - cache_put_start
+            cache_put_calls += 1
         txt_data = captions[sid]
         result = (img_data,txt_data)
         id += 1
         
     if num != 0:
+        process_total = time.perf_counter() - process_begin
+        cache_overhead_total = cache_get_overhead + cache_put_overhead
+        avg_get_us = (cache_get_overhead / cache_get_calls * 1e6) if cache_get_calls else 0.0
+        avg_put_us = (cache_put_overhead / cache_put_calls * 1e6) if cache_put_calls else 0.0
+        overhead_ratio = (cache_overhead_total / process_total) if process_total > 0 else 0.0
         with open("/home/llm/experiment/dataset_Analysis_Modeling/output.log","a+") as f:
             f.write(f"cache hits:{hits},requests:{count},cache hit rate:{hits/count}\n")
+            f.write(
+                "cache mgmt overhead: "
+                f"get_calls={cache_get_calls},put_calls={cache_put_calls},"
+                f"get_total={cache_get_overhead:.6f}s,put_total={cache_put_overhead:.6f}s,\n"
+                f"avg_get={avg_get_us:.2f}us,avg_put={avg_put_us:.2f}us,"
+                f"cache_total={cache_overhead_total:.6f}s,"
+                f"process_total={process_total:.6f}s,"
+                f"cache_overhead_ratio={overhead_ratio:.6f}\n"
+            )
         if args.cache_algorithm in ["iacma","iacma_with_memory","iacma_admission","iacma_with_memory_admission"]:
             # 输出对象重要性
             with open(f"/home/llm/experiment/dataset_Analysis_Modeling/object_importance_log/{args.dataset}_TDP_{args.num}_{args.cache_algorithm}_object_importance.log","w") as f:
@@ -201,11 +227,10 @@ sample_list = [i for i in range(samples[args.dataset])]  # 1-3号文件不存在
 random.seed(123)
 random.shuffle(sample_list)
 
-import time
 start = time.time()
 processed = process_samples(sample_list, filename, args.num, args.cache_algorithm)
 with open("/home/llm/experiment/dataset_Analysis_Modeling/output.log","a+") as f:
     f.write(f"TDP random read耗时 at {args.num},{args.cache_algorithm},memory_size:{args.memory}:{time.time() - start:.4f}秒\n") 
 
-
-# python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_TDP_loader.py cc3m 0 lru 0
+# test
+# sudo python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_TDP_loader.py flickr30k  12405 iacma 0
