@@ -1,0 +1,12 @@
+dataset_name: vqa2
+media_num: 82773
+avg_quantity_ratio: 5.40 
+std_quantity_ratio: 5.25 
+avg_media_size: 162984
+std_media_size: 65542.8 
+avg_text_size: 826
+std_text_size: 38.55  
+output_root: /mnt/datasets/generate_datasets/vqa2
+output_file: mscoco_caption.ffr
+manifest_file: generated_manifest.json
+seed: 42

@@ -1,0 +1,12 @@
+dataset_name: gqa
+media_num: 72139
+avg_quantity_ratio: 13.10
+std_quantity_ratio: 10.54
+avg_media_size: 141380
+std_media_size: 75901.0 
+avg_text_size: 124
+std_text_size: 21.23  
+output_root: /mnt/datasets/generate_datasets/gqa
+output_file: mscoco_caption.ffr
+manifest_file: generated_manifest.json
+seed: 42

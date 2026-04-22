@@ -1,0 +1,12 @@
+dataset_name: cc3m
+media_num: 10000
+avg_quantity_ratio: 1.0
+std_quantity_ratio: 0
+avg_media_size: 90233
+std_media_size: 54582
+avg_text_size: 54
+std_text_size: 25.16 
+output_root: /mnt/datasets/generate_datasets/cc3m
+output_file: mscoco_caption.ffr
+manifest_file: generated_manifest.json
+seed: 42

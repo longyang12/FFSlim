@@ -307,8 +307,6 @@ if args.dataset == "Clotho_E":
     filename = "/mnt/datasets/Clotho_E_FFSlim/mscoco_caption.ffr"
 
 
-
-
 samples = {"cc3m":256878,"flickr30k":155065,"flickr30k_entities":158910,"mscoco":589790,"vqa2":443757,"gqa":943000,"MSRVTT":200000,"Clotho":19690,"Clotho_E":98450}
 
 # 调用处理函数

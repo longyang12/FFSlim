@@ -5,6 +5,8 @@ from typing import Dict, List, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 
+from plot_style import apply_eurosys_style, method_color, method_marker
+
 
 INPUT_FILE = "/home/llm/experiment/dataset_Analysis_Modeling/myplot/fig2.txt"
 OUTPUT_DIR = "/home/llm/experiment/dataset_Analysis_Modeling/myplot/output"
@@ -76,35 +78,13 @@ def linear_fit(xs: np.ndarray, ys: np.ndarray) -> Tuple[np.ndarray, float]:
 
 
 def plot_fig2(data: Dict[str, Dict[str, Dict[str, List[Tuple[float, float]]]]]) -> None:
-    plt.rcParams.update(
-        {
-            "font.family": "serif",
-            "font.serif": ["Times New Roman", "DejaVu Serif"],
-            "font.size": 8.8,
-            "axes.titlesize": 9.2,
-            "axes.labelsize": 8.8,
-            "xtick.labelsize": 8.0,
-            "ytick.labelsize": 8.0,
-            "legend.fontsize": 7.6,
-            "pdf.fonttype": 42,
-            "ps.fonttype": 42,
-        }
-    )
+    apply_eurosys_style()
 
     formats = ["FFSlim", "TDP"]
     workloads = ["Flickr30k", "GQA"]
     methods = ["LRU", "Quiver", "CoorDL"]
 
-    colors = {
-        "LRU": "#4C78A8",
-        "Quiver": "#F58518",
-        "CoorDL": "#54A24B",
-    }
-    markers = {
-        "LRU": "o",
-        "Quiver": "s",
-        "CoorDL": "^",
-    }
+    colors = {m: method_color(m) for m in methods}
 
     fig, axes = plt.subplots(2, 2, figsize=(7.6, 5.3), sharex=True)
 
@@ -127,8 +107,8 @@ def plot_fig2(data: Dict[str, Dict[str, Dict[str, List[Tuple[float, float]]]]]) 
                     xs,
                     ys,
                     color=colors[method],
-                    marker=markers[method],
-                    markersize=4.2,
+                    marker=method_marker(method),
+                        markersize=5.4,
                     linewidth=1.35,
                     markerfacecolor="white",
                     markeredgewidth=0.95,
@@ -138,15 +118,6 @@ def plot_fig2(data: Dict[str, Dict[str, Dict[str, List[Tuple[float, float]]]]]) 
 
                 fit, r2 = linear_fit(xs, ys)
                 r2_values.append(r2)
-                ax.plot(
-                    xs,
-                    fit,
-                    color=colors[method],
-                    linestyle="--",
-                    linewidth=0.95,
-                    alpha=0.65,
-                    zorder=2,
-                )
 
                 if i == 0 and j == 0:
                     legend_handles.append(line)
@@ -163,7 +134,7 @@ def plot_fig2(data: Dict[str, Dict[str, Dict[str, List[Tuple[float, float]]]]]) 
                 transform=ax.transAxes,
                 ha="left",
                 va="top",
-                fontsize=7.5,
+                fontsize=10,
                 bbox={"facecolor": "white", "edgecolor": "#CCCCCC", "alpha": 0.8, "pad": 2.0},
             )
             ax.text(
@@ -173,7 +144,7 @@ def plot_fig2(data: Dict[str, Dict[str, Dict[str, List[Tuple[float, float]]]]]) 
                 transform=ax.transAxes,
                 ha="right",
                 va="top",
-                fontsize=7.5,
+                fontsize=10,
                 bbox={"facecolor": "white", "edgecolor": "#CCCCCC", "alpha": 0.8, "pad": 2.0},
             )
             if j == 0:

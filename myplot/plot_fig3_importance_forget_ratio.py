@@ -5,6 +5,8 @@ from typing import Dict, List
 import matplotlib.pyplot as plt
 import numpy as np
 
+from plot_style import FORGET_COLORS, apply_eurosys_style
+
 
 INPUT_FILE = "/home/llm/experiment/dataset_Analysis_Modeling/myplot/fig3.txt"
 OUTPUT_DIR = "/home/llm/experiment/dataset_Analysis_Modeling/myplot/output"
@@ -86,31 +88,14 @@ def parse_fig3(path: str) -> Dict[str, Dict[str, Dict[str, float]]]:
 
 
 def plot_fig3(data: Dict[str, Dict[str, Dict[str, float]]]) -> None:
-    plt.rcParams.update(
-        {
-            "font.family": "serif",
-            "font.serif": ["Times New Roman", "DejaVu Serif"],
-            "font.size": 9,
-            "axes.labelsize": 9,
-            "axes.titlesize": 10,
-            "xtick.labelsize": 8,
-            "ytick.labelsize": 8,
-            "legend.fontsize": 8,
-            "pdf.fonttype": 42,
-            "ps.fonttype": 42,
-        }
-    )
+    apply_eurosys_style()
 
     formats = ["FFSlim", "TDP"]
     workloads = ["Flickr30k", "F30-E", "MSCOCO", "Clotho", "MSRVTT", "VQA2", "GQA"]
 
     methods = ["DFR", "SFR", "FFR"]
 
-    colors = {
-        "DFR": "#4C78A8",
-        "SFR": "#F58518",
-        "FFR": "#54A24B",
-    }
+    colors = FORGET_COLORS
 
     fig, axes = plt.subplots(1, 2, figsize=(10.8, 3.8), sharey=True)
     x = np.arange(len(workloads), dtype=float)
@@ -138,11 +123,12 @@ def plot_fig3(data: Dict[str, Dict[str, Dict[str, float]]]) -> None:
             )
 
         ax.set_xticks(x)
-        ax.set_xticklabels(workloads, rotation=20, ha="right")
+        ax.set_xticklabels(workloads, rotation=25, ha="right")
         ax.grid(axis="y", linestyle="--", linewidth=0.5, alpha=0.38)
         ax.set_axisbelow(True)
         ax.set_ylim(0, ymax * 1.16)
-        ax.set_xlabel("Workload")
+        ax.set_xlabel("")
+        ax.set_title(f"{fmt} Format")
 
     axes[0].set_ylabel("Important Forget Ratio (%)")
 
@@ -158,7 +144,7 @@ def plot_fig3(data: Dict[str, Dict[str, Dict[str, float]]]) -> None:
         columnspacing=1.2,
     )
 
-    fig.tight_layout(rect=[0.01, 0.06, 1.0, 0.94])
+    fig.tight_layout(rect=[0.01, 0.08, 1.0, 0.94])
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     png_path = os.path.join(OUTPUT_DIR, "fig3_importance_forget_ratio.png")

@@ -5,6 +5,8 @@ from typing import Dict, List, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 
+from plot_style import apply_eurosys_style, method_color, method_marker
+
 
 INPUT_FILE = "/home/llm/experiment/dataset_Analysis_Modeling/myplot/fig4.txt"
 OUTPUT_DIR = "/home/llm/experiment/dataset_Analysis_Modeling/myplot/output"
@@ -105,23 +107,6 @@ def parse_fig4(path: str) -> Dict[str, Dict[str, object]]:
     return result
 
 
-def _eurosys_style() -> None:
-    plt.rcParams.update(
-        {
-            "font.family": "serif",
-            "font.serif": ["Times New Roman", "DejaVu Serif"],
-            "font.size": 9,
-            "axes.labelsize": 9,
-            "axes.titlesize": 10,
-            "xtick.labelsize": 8,
-            "ytick.labelsize": 8,
-            "legend.fontsize": 8,
-            "pdf.fonttype": 42,
-            "ps.fonttype": 42,
-        }
-    )
-
-
 def plot_dual_axis(fmt: str, payload: Dict[str, object], output_dir: str) -> None:
     methods: List[str] = payload["methods"]  # type: ignore[assignment]
     perf: Dict[str, Dict[str, float]] = payload["performance"]  # type: ignore[assignment]
@@ -130,37 +115,17 @@ def plot_dual_axis(fmt: str, payload: Dict[str, object], output_dir: str) -> Non
     workloads = list(perf.keys())
     x = np.arange(len(workloads), dtype=float)
 
-    colors = {
-        methods[0]: "#4C78A8",
-        "LRU": "#F58518",
-        "Quiver": "#54A24B",
-        "CoorDL": "#E45756",
-        "EMD-Cache": "#B279A2",
-    }
-    line_styles = {
-        methods[0]: "-",
-        "LRU": "--",
-        "Quiver": "-.",
-        "CoorDL": ":",
-        "EMD-Cache": "-",
-    }
-    line_markers = {
-        methods[0]: "o",
-        "LRU": "s",
-        "Quiver": "^",
-        "CoorDL": "D",
-        "EMD-Cache": "P",
-    }
+    colors = {m: method_color(m) for m in methods}
 
     fig, ax1 = plt.subplots(figsize=(10.8, 4.2))
     ax2 = ax1.twinx()
 
     width = 0.16
     offsets = np.linspace(-2.0 * width, 2.0 * width, len(methods))
-    line_offsets = np.linspace(-0.10, 0.10, len(methods))
+    dot_offsets = offsets.copy()
 
     bar_handles = []
-    line_handles = []
+    dot_handles = []
 
     for idx, method in enumerate(methods):
         y_perf = [perf[w][method] for w in workloads]
@@ -170,31 +135,29 @@ def plot_dual_axis(fmt: str, payload: Dict[str, object], output_dir: str) -> Non
             x + offsets[idx],
             y_perf,
             width=width,
-            color=colors.get(method, "#999999"),
+            color=colors[method],
             edgecolor="#1F1F1F",
-            linewidth=0.48,
-            alpha=0.88,
+            linewidth=0.72 if method == "EMD-Cache" else 0.48,
+            alpha=0.96 if method == "EMD-Cache" else 0.88,
             zorder=2,
         )
         bar_handles.append(bar)
 
-        (line,) = ax2.plot(
-            x + line_offsets[idx],
+        dots = ax2.scatter(
+            x + dot_offsets[idx],
             y_hit,
-            color=colors.get(method, "#999999"),
-            marker=line_markers.get(method, "o"),
-            markersize=4.8,
-            markerfacecolor="white",
-            markeredgewidth=1.0,
-            linewidth=1.55,
-            linestyle=line_styles.get(method, "-"),
+            color=colors[method],
+            marker=method_marker(method),
+            s=60 if method == "EMD-Cache" else 48,
+            linewidths=1.0,
+            edgecolors="#1F1F1F",
             zorder=3,
         )
-        line_handles.append(line)
+        dot_handles.append(dots)
 
     ax1.set_xticks(x)
-    ax1.set_xticklabels(workloads, rotation=20, ha="right")
-    ax1.set_xlabel("Workload")
+    ax1.set_xticklabels(workloads, rotation=0, ha="center")
+    ax1.set_xlabel("")
     ax1.set_ylabel("Throughput (samples/s)")
     ax2.set_ylabel("Hit Rate (%)")
     ax1.grid(axis="y", linestyle="--", linewidth=0.55, alpha=0.40)
@@ -205,10 +168,10 @@ def plot_dual_axis(fmt: str, payload: Dict[str, object], output_dir: str) -> Non
     ax1.set_ylim(0, pmax * 1.18)
     ax2.set_ylim(0, max(12.0, hmax * 1.18))
 
-    ax1.set_title(f"{fmt} Overall Effect: Throughput and Hit Rate")
+    ax1.set_title(f"{fmt}: EMD-Cache vs Traditional Cache Algorithms")
 
     method_handles = [h[0] for h in bar_handles]
-    legend_handles = method_handles + line_handles
+    legend_handles = method_handles + dot_handles
     legend_labels = methods + [f"{m} Hit" for m in methods]
     fig.legend(
         legend_handles,
@@ -221,7 +184,7 @@ def plot_dual_axis(fmt: str, payload: Dict[str, object], output_dir: str) -> Non
         handlelength=2.0,
     )
 
-    fig.tight_layout(rect=[0.0, 0.07, 1.0, 0.98])
+    fig.tight_layout(rect=[0.0, 0.09, 1.0, 0.98])
 
     os.makedirs(output_dir, exist_ok=True)
     png_path = os.path.join(output_dir, f"fig4_{fmt.lower()}_dual_axis.png")
@@ -235,7 +198,7 @@ def plot_dual_axis(fmt: str, payload: Dict[str, object], output_dir: str) -> Non
 
 
 def main() -> None:
-    _eurosys_style()
+    apply_eurosys_style()
     parsed = parse_fig4(INPUT_FILE)
 
     for fmt in ["FFSlim", "TDP"]:

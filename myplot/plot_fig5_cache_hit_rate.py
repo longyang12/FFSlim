@@ -5,6 +5,8 @@ from typing import Dict, List, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 
+from plot_style import apply_eurosys_style, method_color, method_marker
+
 
 INPUT_FILE = "/home/llm/experiment/dataset_Analysis_Modeling/myplot/fig5.txt"
 OUTPUT_DIR = "/home/llm/experiment/dataset_Analysis_Modeling/myplot/output"
@@ -72,40 +74,18 @@ def parse_fig5(path: str) -> Dict[str, Dict[str, Dict[str, List[Tuple[float, flo
     return data
 
 
-def _eurosys_style() -> None:
-    plt.rcParams.update(
-        {
-            "font.family": "serif",
-            "font.serif": ["Times New Roman", "DejaVu Serif"],
-            "font.size": 9,
-            "axes.labelsize": 9,
-            "axes.titlesize": 10,
-            "xtick.labelsize": 8,
-            "ytick.labelsize": 8,
-            "legend.fontsize": 8,
-            "pdf.fonttype": 42,
-            "ps.fonttype": 42,
-        }
-    )
-
-
 def plot_fig5(data: Dict[str, Dict[str, Dict[str, List[Tuple[float, float]]]]]) -> None:
-    _eurosys_style()
+    apply_eurosys_style()
 
     formats = ["FFSlim", "TDP"]
     workloads = ["Flickr30k", "GQA"]
     methods = ["LRU", "Quiver", "CoorDL", "EMD-Cache"]
 
-    colors = {
-        "LRU": "#4C78A8",
-        "Quiver": "#F58518",
-        "CoorDL": "#54A24B",
-        "EMD-Cache": "#D62728",
-    }
+    colors = {m: method_color(m) for m in methods}
     line_styles = {
-        "LRU": "--",
-        "Quiver": "-.",
-        "CoorDL": ":",
+        "LRU": "-",
+        "Quiver": "-",
+        "CoorDL": "-",
         "EMD-Cache": "-",
     }
     markers = {
@@ -133,7 +113,7 @@ def plot_fig5(data: Dict[str, Dict[str, Dict[str, List[Tuple[float, float]]]]]) 
                 transform=ax.transAxes,
                 ha="left",
                 va="top",
-                fontsize=7.6,
+                fontsize=10,
                 bbox={"facecolor": "white", "edgecolor": "#D0D0D0", "alpha": 0.9, "pad": 2.0},
             )
 
@@ -149,8 +129,8 @@ def plot_fig5(data: Dict[str, Dict[str, Dict[str, List[Tuple[float, float]]]]]) 
                     color=colors[method],
                     linestyle=line_styles[method],
                     linewidth=2.35 if is_ours else 1.45,
-                    marker=markers[method],
-                    markersize=7.0 if is_ours else 4.5,
+                    marker=method_marker(method),
+                        markersize=8.2 if is_ours else 5.6,
                     markerfacecolor="white" if not is_ours else colors[method],
                     markeredgewidth=1.05 if is_ours else 0.95,
                     alpha=1.0 if is_ours else 0.9,
