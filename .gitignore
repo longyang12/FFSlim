@@ -4,3 +4,4 @@ processed_datasets/
 output*
 *log*
 generate_yaml
+monitor/

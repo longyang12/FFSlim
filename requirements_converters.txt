@@ -1,0 +1,3 @@
+ffrecord
+pandas
+tensorflow  # optional, required for TFRecord conversion

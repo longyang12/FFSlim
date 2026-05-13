@@ -121,7 +121,7 @@ def process_samples(samples,batch_size,file_path,num,cache_algorithm):
     if args.index_structure == "adaptive_index":
         if args.dataset in ["cc3m"]:
             X = 1
-        elif args.dataset in ["flickr30k","flickr30k_entities","mscoco","Clotho","Clotho_E"]:
+        elif args.dataset in ["flickr30k","flickr30k_entities","mscoco","mscoco_hdd", "Clotho","Clotho_E"]:
             X = 5
         elif args.dataset in ["MSRVTT"]:
             X = 20
@@ -198,7 +198,7 @@ def process_samples(samples,batch_size,file_path,num,cache_algorithm):
                             cache_put_calls += 1
             # 根据自适应索引检索
             elif args.index_structure=="adaptive_index":
-                if args.dataset in ["cc3m","flickr30k","flickr30k_entities","mscoco","MSRVTT","Clotho","Clotho_E"]:
+                if args.dataset in ["cc3m","flickr30k","flickr30k_entities","mscoco","mscoco_hdd" ,"MSRVTT","Clotho","Clotho_E"]:
                     start = time.time()
                     temp = [i//X,i%X] # 从0开始编号
                     index_time.append(time.time() - start)
@@ -254,12 +254,13 @@ def process_samples(samples,batch_size,file_path,num,cache_algorithm):
                 f"process_total={process_total:.6f}s,"
                 f"cache_overhead_ratio={cache_overhead_total/process_total:.6f}\n"
             )
-        if args.cache_algorithm in ["dgim_iacma","dgim_iacma_with_memory","dgim_iacma_admission","dgim_iacma_with_memory_admission"]:
-            # 输出对象重要性
-            with open(f"/home/llm/experiment/dataset_Analysis_Modeling/object_importance_log/{args.dataset}_FFSlim_{args.num}_{args.cache_algorithm}_object_importance.log","w") as f:
-                f.write(f"dataset:{args.dataset}_FFSlim,num:{args.num},cache_algorithm:{args.cache_algorithm},cache hits:{hits},requests:{count},cache hit rate:{hits/count}\n")
-                for key, score_shifts in cache.get_object_importance().items():
-                    f.write(f"key:{key},score_shifts:{score_shifts}\n")
+            
+        # if args.cache_algorithm in ["dgim_iacma","dgim_iacma_with_memory","dgim_iacma_admission","dgim_iacma_with_memory_admission"]:
+        #     # 输出对象重要性
+        #     with open(f"/home/llm/experiment/dataset_Analysis_Modeling/object_importance_log/{args.dataset}_FFSlim_{args.num}_{args.cache_algorithm}_object_importance.log","w") as f:
+        #         f.write(f"dataset:{args.dataset}_FFSlim,num:{args.num},cache_algorithm:{args.cache_algorithm},cache hits:{hits},requests:{count},cache hit rate:{hits/count}\n")
+        #         for key, score_shifts in cache.get_object_importance().items():
+        #             f.write(f"key:{key},score_shifts:{score_shifts}\n")
 
 # 创建解析器
 parser = argparse.ArgumentParser()
@@ -306,8 +307,11 @@ if args.dataset == "Clotho":
 if args.dataset == "Clotho_E":
     filename = "/mnt/datasets/Clotho_E_FFSlim/mscoco_caption.ffr"
 
+# mscoco_hdd
+if args.dataset == "mscoco_hdd":
+    filename = "/mnt/datasets_hdd/mscoco_FFSlim/mscoco_caption.ffr"
 
-samples = {"cc3m":256878,"flickr30k":155065,"flickr30k_entities":158910,"mscoco":589790,"vqa2":443757,"gqa":943000,"MSRVTT":200000,"Clotho":19690,"Clotho_E":98450}
+samples = {"cc3m":256878,"flickr30k":155065,"flickr30k_entities":158910,"mscoco":589790,"mscoco_hdd":589790,"vqa2":443757,"gqa":943000,"MSRVTT":200000,"Clotho":19690,"Clotho_E":98450}
 
 # 调用处理函数
 sample_list = [i for i in range(samples[args.dataset])]  # 1-3号文件不存在用于演示错误处理

@@ -2,7 +2,7 @@
 from ffrecord import FileReader
 import pickle
 import random
-from ffrecord_lru import LRUCache
+from cache.ffrecord_lru import LRUCache
 
 def process_samples(samples,batch_size,file_path,num,cache_algorithm):
     # 构建batch阶段

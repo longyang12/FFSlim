@@ -13,12 +13,11 @@
 # sudo tune2fs -l /dev/nvme0n1
 # sudo mount /dev/nvme0n1 /mnt/datasets
 
-# 设置page cache预取大小 
-# 降低ssd性能，模拟hdd+gpfs性能
-sudo blockdev --getra /dev/nvme2n1
-# sudo blockdev --setra 0 /dev/nvme2n1
-sudo blockdev --setra 4096 /dev/nvme2n1
-sudo blockdev --getra /dev/nvme2n1
+# 设置page cache预取大小，防止page cache对性能的影响
+# sudo blockdev --getra /dev/nvme2n1
+# # sudo blockdev --setra 0 /dev/nvme2n1
+# sudo blockdev --setra 4096 /dev/nvme2n1
+# sudo blockdev --getra /dev/nvme2n1
 
 
 ###############################
@@ -28,54 +27,56 @@ sudo blockdev --getra /dev/nvme2n1
 
 # Test FFSlim
 # for dataset in cc3m flickr30k flickr30k_entities mscoco vqa2 gqa MSRVTT Clotho Clotho_E
-# # for dataset in cc3m
-# do
-#     for index_structure in adaptive_index
-#     do
-#         for num in 0
-#         do
-#             echo "当前数值: $num"
-#             # 在此处添加处理逻辑
-#             echo "lru"
-#             sudo ./run_with_cgroup.sh python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_FFSlim_loader.py $dataset $num lru $index_structure
-#             while [ $(wc -c < "/sys/fs/cgroup/file_reader/cgroup.procs") -gt 0 ]; do
-#                 sleep 1  # 每秒检查一次
-#             done
-#             echo "cgroup 内所有进程已结束"
-#         done
-#     done
-# done
+for dataset in mscoco_hdd
+do
+    for index_structure in adaptive_index
+    do
+        for num in 0
+        do
+            echo "当前数值: $num"
+            # 在此处添加处理逻辑
+            echo "lru"
+            sudo ./run_with_cgroup.sh python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_FFSlim_loader.py $dataset $num lru $index_structure
+            while [ $(wc -c < "/sys/fs/cgroup/file_reader/cgroup.procs") -gt 0 ]; do
+                sleep 1  # 每秒检查一次
+            done
+            echo "cgroup 内所有进程已结束"
+        done
+    done
+done
 
 
-# # Test TDP
+# Test TDP
 # for dataset in cc3m flickr30k flickr30k_entities mscoco vqa2 gqa MSRVTT Clotho Clotho_E
-# for dataset in cc3m 
-# do
-#     for num in 0 
-#     do
-#         echo "当前数值: $num"
-#         # 在此处添加处理逻辑
-#         echo "lru"
-#         sudo ./run_with_cgroup.sh python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_TDP_loader.py $dataset $num lru
-#         while [ $(wc -c < "/sys/fs/cgroup/file_reader/cgroup.procs") -gt 0 ]; do
-#             sleep 1  # 每秒检查一次
-#         done
-#         echo "cgroup 内所有进程已结束"
-#     done
-# done
+for dataset in mscoco_hdd 
+do
+    for num in 0 
+    do
+        echo "当前数值: $num"
+        # 在此处添加处理逻辑
+        echo "lru"
+        sudo ./run_with_cgroup.sh python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_TDP_loader.py $dataset $num lru
+        while [ $(wc -c < "/sys/fs/cgroup/file_reader/cgroup.procs") -gt 0 ]; do
+            sleep 1  # 每秒检查一次
+        done
+        echo "cgroup 内所有进程已结束"
+    done
+done
 
 
 ###############################
 ####### cache on FFSlim #######
 ###############################
 
-datasets=("cc3m" "flickr30k" "flickr30k_entities" "mscoco" "vqa2" "gqa" "MSRVTT" "Clotho" "Clotho_E")
-counts=("102751" "12405" "12713" "47183" "33109" "28856" "4000" "1575" "7876")
+# datasets=("cc3m" "flickr30k" "flickr30k_entities" "mscoco" "vqa2" "gqa" "MSRVTT" "Clotho" "Clotho_E")
+# counts=("102751" "12405" "12713" "47183" "33109" "28856" "4000" "1575" "7876")
+datasets=("mscoco_hdd")
+counts=("47183")
 
 
 for i in "${!datasets[@]}"; do
-    for cache_algorithm in lru quiver coordl dgim_lru dgim_quiver dgim_coordl dgim_iacma dgim_iacma_admission dgim_iacma_with_memory dgim_iacma_with_memory_admission; do
-    # for cache_algorithm in dgim_iacma dgim_iacma_admission dgim_iacma_with_memory dgim_iacma_with_memory_admission; do
+    # for cache_algorithm in lru quiver coordl dgim_lru dgim_quiver dgim_coordl dgim_iacma dgim_iacma_admission dgim_iacma_with_memory dgim_iacma_with_memory_admission; do
+    for cache_algorithm in lru quiver coordl dgim_iacma_with_memory; do
         echo " sudo ./run_with_cgroup.sh python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_FFSlim_loader.py ${datasets[$i]} ${counts[$i]} ${cache_algorithm} adaptive_index"
         sudo ./run_with_cgroup.sh python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_FFSlim_loader.py ${datasets[$i]} ${counts[$i]} ${cache_algorithm} adaptive_index     
         while [ $(wc -c < "/sys/fs/cgroup/file_reader/cgroup.procs") -gt 0 ]; do
@@ -90,12 +91,15 @@ done
 ######### cache on TDP ########
 ###############################
 
-datasets=("cc3m" "flickr30k" "flickr30k_entities" "mscoco" "vqa2" "gqa" "MSRVTT" "Clotho" "Clotho_E")
-counts=("102751" "12405" "12713" "47183" "33109" "28856" "4000" "1575" "7876")
+# datasets=("cc3m" "flickr30k" "flickr30k_entities" "mscoco" "vqa2" "gqa" "MSRVTT" "Clotho" "Clotho_E")
+# counts=("102751" "12405" "12713" "47183" "33109" "28856" "4000" "1575" "7876")
+
+datasets=("mscoco_hdd")
+counts=("47183")
 
 for i in "${!datasets[@]}"; do
-    for cache_algorithm in lru quiver coordl iacma iacma_admission iacma_with_memory iacma_with_memory_admission; do
-    # for cache_algorithm in iacma iacma_admission iacma_with_memory iacma_with_memory_admission; do
+    # for cache_algorithm in lru quiver coordl iacma iacma_admission iacma_with_memory iacma_with_memory_admission; do
+    for cache_algorithm in lru quiver coordl iacma_with_memory; do
         echo " sudo ./run_with_cgroup.sh python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_TDP_loader.py ${datasets[$i]} ${counts[$i]} ${cache_algorithm}"
         sudo ./run_with_cgroup.sh python3 /home/llm/experiment/dataset_Analysis_Modeling/loaders/random_TDP_loader.py ${datasets[$i]} ${counts[$i]} ${cache_algorithm}     
         while [ $(wc -c < "/sys/fs/cgroup/file_reader/cgroup.procs") -gt 0 ]; do
@@ -174,6 +178,7 @@ done
 #         echo "cgroup 内所有进程已结束"
 #     done
 # done
+
 
 
 

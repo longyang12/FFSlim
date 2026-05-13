@@ -46,6 +46,9 @@ elif [[ $3 == "flickr30k_entities" ]]; then
 elif [[ $3 == "mscoco" ]]; then
     echo mscoco
     memory=$(($4*159*1024 + 54272656))
+elif [[ $3 == "mscoco_hdd" ]]; then
+    echo mscoco_hdd
+    memory=$(($4*159*1024 + 54272656))
 elif [[ $3 == "vqa2" ]]; then
     echo vqa2
     memory=$(($4*153*1024 + 54272656))
@@ -67,8 +70,8 @@ elif [[ $3 == "Clotho_E" ]]; then
 fi  # 只需一个闭合标记
 
 cat /sys/fs/cgroup/file_reader/memory.max
-# echo $memory > /sys/fs/cgroup/file_reader/memory.max
-echo max > /sys/fs/cgroup/file_reader/memory.max
+echo $memory > /sys/fs/cgroup/file_reader/memory.max
+# echo max > /sys/fs/cgroup/file_reader/memory.max
 cat /sys/fs/cgroup/file_reader/memory.max
 
 # 运行脚本

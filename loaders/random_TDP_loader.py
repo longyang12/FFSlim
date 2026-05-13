@@ -171,12 +171,12 @@ def process_samples(sample_ids, base_dir, num, cache_algorithm):
                 f"process_total={process_total:.6f}s,"
                 f"cache_overhead_ratio={overhead_ratio:.6f}\n"
             )
-        if args.cache_algorithm in ["iacma","iacma_with_memory","iacma_admission","iacma_with_memory_admission"]:
-            # 输出对象重要性
-            with open(f"/home/llm/experiment/dataset_Analysis_Modeling/object_importance_log/{args.dataset}_TDP_{args.num}_{args.cache_algorithm}_object_importance.log","w") as f:
-                f.write(f"dataset:{args.dataset}_TDP,num:{args.num},cache_algorithm:{args.cache_algorithm},cache hits:{hits},requests:{count},cache hit rate:{hits/count}\n")
-                for key, score_shifts in cache.get_object_importance().items():
-                    f.write(f"key:{key},score_shifts:{score_shifts}\n")
+        # if args.cache_algorithm in ["iacma","iacma_with_memory","iacma_admission","iacma_with_memory_admission"]:
+        #     # 输出对象重要性
+        #     with open(f"/home/llm/experiment/dataset_Analysis_Modeling/object_importance_log/{args.dataset}_TDP_{args.num}_{args.cache_algorithm}_object_importance.log","w") as f:
+        #         f.write(f"dataset:{args.dataset}_TDP,num:{args.num},cache_algorithm:{args.cache_algorithm},cache hits:{hits},requests:{count},cache hit rate:{hits/count}\n")
+        #         for key, score_shifts in cache.get_object_importance().items():
+        #             f.write(f"key:{key},score_shifts:{score_shifts}\n")
 
 # 创建解析器
 parser = argparse.ArgumentParser()
@@ -219,8 +219,12 @@ if args.dataset == "Clotho":
 if args.dataset == "Clotho_E":
     filename = "/mnt/datasets/Clotho_E_TDP"
 
+# mscoco_hdd
+if args.dataset == "mscoco_hdd":
+    filename = "/mnt/datasets_hdd/mscoco_TDP"
 
-samples = {"cc3m":256878,"flickr30k":155065,"flickr30k_entities":158910,"mscoco":589790,"vqa2":443757,"gqa":943000,"MSRVTT":200000,"Clotho":19690,"Clotho_E":98450}
+
+samples = {"cc3m":256878,"flickr30k":155065,"flickr30k_entities":158910,"mscoco":589790,"mscoco_hdd":589790,"vqa2":443757,"gqa":943000,"MSRVTT":200000,"Clotho":19690,"Clotho_E":98450}
 
 # 调用处理函数
 sample_list = [i for i in range(samples[args.dataset])]  # 1-3号文件不存在用于演示错误处理

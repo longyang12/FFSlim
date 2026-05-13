@@ -1,0 +1,12 @@
+dataset_name: mscoco
+media_num: 100000
+avg_quantity_ratio: 5.0
+std_quantity_ratio: 0
+avg_media_size: 163273
+std_media_size: 65824.2
+avg_text_size: 52
+std_text_size: 12.70
+output_root: /mnt/datasets/mscoco_variable/mscoco_100K_ffslim
+output_file: mscoco_caption.ffr
+manifest_file: generated_manifest.json
+seed: 42
