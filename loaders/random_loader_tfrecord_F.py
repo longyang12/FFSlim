@@ -12,19 +12,21 @@ from cache.ffrecord_lru import LRUCache
 VARIANT = "F"
 
 
-def _get_anon_kb():
+_POSIX_FADV_DONTNEED = getattr(os, "POSIX_FADV_DONTNEED", 4)
+_HAS_FADVISE = hasattr(os, "posix_fadvise")
+
+
+def _drop_file_cache(fd, offset=0, length=0):
+    if not _HAS_FADVISE:
+        return
     try:
-        with open("/proc/self/status", "r", encoding="utf-8") as f:
-            for line in f:
-                if line.startswith("RssAnon:"):
-                    return int(line.split()[1])
+        os.posix_fadvise(fd, offset, length, _POSIX_FADV_DONTNEED)
     except Exception:
         pass
-    return 0
+
 
 
 def _load_index(index_path):
-    anon_before = _get_anon_kb()
     entries = []
     with open(index_path, "r", encoding="utf-8") as f:
         for line in f:
@@ -32,13 +34,6 @@ def _load_index(index_path):
             if not line:
                 continue
             entries.append(json.loads(line))
-    anon_after = _get_anon_kb()
-    with open("/home/llm/experiment/dataset_Analysis_Modeling/output.log", "a+") as f:
-        f.write(
-            "index_anon_kb:before={0},after={1},delta={2}\n".format(
-                anon_before, anon_after, anon_after - anon_before
-            )
-        )
     return entries
 
 
@@ -46,12 +41,13 @@ def _read_record(f, offset):
     f.seek(offset)
     length_bytes = f.read(8)
     if len(length_bytes) != 8:
-        return None
+        return None, 0
     length = int.from_bytes(length_bytes, "little")
     f.read(4)
     data = f.read(length)
     f.read(4)
-    return data
+    total_len = 16 + length
+    return data, total_len
 
 
 def _decode_example(data):
@@ -79,6 +75,7 @@ def process_samples(sample_ids, tfrecord_path, entries, num):
     count = 0
 
     with open(tfrecord_path, "rb") as f:
+        fd = f.fileno()
         for sid in sample_ids:
             if cache is not None:
                 count += 1
@@ -87,9 +84,11 @@ def process_samples(sample_ids, tfrecord_path, entries, num):
                     hits += 1
                     continue
             entry = entries[sid]
-            data = _read_record(f, entry["offset"])
+            offset = entry["offset"]
+            data, total_len = _read_record(f, offset)
             if data is None:
                 continue
+            _drop_file_cache(fd, offset, total_len)
             result = _decode_example(data)
             if cache is not None:
                 cache.put(sid, result)

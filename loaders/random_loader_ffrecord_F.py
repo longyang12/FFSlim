@@ -13,18 +13,28 @@ from cache.ffrecord_lru import LRUCache
 VARIANT = "F"
 
 
-def _get_anon_kb():
+_POSIX_FADV_DONTNEED = getattr(os, "POSIX_FADV_DONTNEED", 4)
+_HAS_FADVISE = hasattr(os, "posix_fadvise")
+
+
+def _drop_file_cache(fd, offset=0, length=0):
+    if not _HAS_FADVISE or fd is None:
+        return
     try:
-        with open("/proc/self/status", "r", encoding="utf-8") as f:
-            for line in f:
-                if line.startswith("RssAnon:"):
-                    return int(line.split()[1])
+        os.posix_fadvise(fd, offset, length, _POSIX_FADV_DONTNEED)
     except Exception:
         pass
-    return 0
 
 
-def process_samples(sample_ids, reader, num):
+def _open_side_fd(ffr_path):
+    try:
+        return os.open(ffr_path, os.O_RDONLY)
+    except Exception:
+        return None
+
+
+
+def process_samples(sample_ids, reader, side_fd, num):
     cache = LRUCache(num) if num != 0 else None
     hits = 0
     count = 0
@@ -37,6 +47,7 @@ def process_samples(sample_ids, reader, num):
                 hits += 1
                 continue
         datasets = reader.read([sid])
+        _drop_file_cache(side_fd)
         for sample in datasets:
             result = pickle.loads(sample)
             if cache is not None:
@@ -59,10 +70,10 @@ def main():
     base_dir = os.path.join(args.root, base_name)
     ffr_path = os.path.join(base_dir, base_name + ".ffr")
 
-    anon_before = _get_anon_kb()
     reader = FileReader(ffr_path)
-    anon_after = _get_anon_kb()
-    
+    side_fd = _open_side_fd(ffr_path)
+
+
     sample_ids = list(range(reader.n))
     random.seed(123)
     random.shuffle(sample_ids)
@@ -71,14 +82,16 @@ def main():
         f.write(
             f"dataset:{args.dataset},format:ffrecord_{VARIANT},samples:{reader.n},num:{args.num},memory_size:{args.memory}\n"
         )
-        f.write(
-            "index_anon_kb:before={0},after={1},delta={2}\n".format(
-                anon_before, anon_after, anon_after - anon_before
-            )
-        )
-
     start = time.time()
-    process_samples(sample_ids, reader, args.num)
+    try:
+        process_samples(sample_ids, reader, side_fd, args.num)
+    finally:
+        if side_fd is not None:
+            try:
+                os.close(side_fd)
+            except Exception:
+                pass
+
     with open("/home/llm/experiment/dataset_Analysis_Modeling/output.log", "a+") as f:
         f.write(
             f"FFRecord random read耗时 {VARIANT} at {args.num},memory_size:{args.memory}:{time.time() - start:.4f}秒\n"

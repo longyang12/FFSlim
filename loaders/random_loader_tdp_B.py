@@ -14,6 +14,19 @@ from cache.tdp_lru import LRUCache
 VARIANT = "B"
 
 
+_POSIX_FADV_DONTNEED = getattr(os, "POSIX_FADV_DONTNEED", 4)
+_HAS_FADVISE = hasattr(os, "posix_fadvise")
+
+
+def _drop_file_cache(fd, offset=0, length=0):
+    if not _HAS_FADVISE:
+        return
+    try:
+        os.posix_fadvise(fd, offset, length, _POSIX_FADV_DONTNEED)
+    except Exception:
+        pass
+
+
 def _get_anon_kb():
     try:
         with open("/proc/self/status", "r", encoding="utf-8") as f:
@@ -34,14 +47,6 @@ def process_samples(sample_ids, base_dir, df, num):
     images = df["image_path"].tolist()
     captions = df["image_caption"].tolist()
     anon_after = _get_anon_kb()
-
-    with open("/home/llm/experiment/dataset_Analysis_Modeling/output.log", "a+") as f:
-        f.write(
-            "index_anon_kb:before={0},after={1},delta={2}\n".format(
-                anon_before, anon_after, anon_after - anon_before
-            )
-        )
-
     for sid in sample_ids:
         key = os.path.splitext(images[sid])[0]
         if cache is not None:
@@ -53,6 +58,7 @@ def process_samples(sample_ids, base_dir, df, num):
         img_path = os.path.join(base_dir, "img", images[sid])
         with open(img_path, "rb") as f:
             img_data = f.read()
+            _drop_file_cache(f.fileno())
         try:
             caption = json.loads(captions[sid])
         except Exception:

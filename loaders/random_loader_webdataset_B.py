@@ -12,6 +12,19 @@ from cache.ffrecord_lru import LRUCache
 VARIANT = "B"
 
 
+_POSIX_FADV_DONTNEED = getattr(os, "POSIX_FADV_DONTNEED", 4)
+_HAS_FADVISE = hasattr(os, "posix_fadvise")
+
+
+def _drop_file_cache(fd, offset=0, length=0):
+    if not _HAS_FADVISE:
+        return
+    try:
+        os.posix_fadvise(fd, offset, length, _POSIX_FADV_DONTNEED)
+    except Exception:
+        pass
+
+
 def _get_anon_kb():
     try:
         with open("/proc/self/status", "r", encoding="utf-8") as f:
@@ -24,7 +37,6 @@ def _get_anon_kb():
 
 
 def _load_index(index_path):
-    anon_before = _get_anon_kb()
     entries = []
     with open(index_path, "r", encoding="utf-8") as f:
         for line in f:
@@ -32,13 +44,6 @@ def _load_index(index_path):
             if not line:
                 continue
             entries.append(json.loads(line))
-    anon_after = _get_anon_kb()
-    with open("/home/llm/experiment/dataset_Analysis_Modeling/output.log", "a+") as f:
-        f.write(
-            "index_anon_kb:before={0},after={1},delta={2}\n".format(
-                anon_before, anon_after, anon_after - anon_before
-            )
-        )
     return entries
 
 
@@ -63,6 +68,7 @@ def _read_sample(base_dir, entry):
                     result["meta_raw"] = raw
             else:
                 result[name] = raw
+        _drop_file_cache(f.fileno())
     return result
 
 
